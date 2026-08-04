@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # 1. Database: PostgreSQL with automatically initialized schema
+  database:
+    image: postgres:15-alpine
+    container_name: saas_permitting_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saas_admin
+      POSTGRES_PASSWORD: saas_password_2026
+      POSTGRES_DB: saas_permits
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - saas_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_admin -d saas_permits"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Cache & Session Manager: Redis
+  cache:
+    image: redis:7-alpine
+    container_name: saas_permitting_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - saas_cache_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Local S3 Compatible Storage: MinIO
+  storage:
+    image: minio/minio:latest
+    container_name: saas_permitting_storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000" # MinIO API
+      - "9001:9001" # MinIO Console
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_password_2026
+    volumes:
+      - saas_storage_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 4. Local Email Catcher: Mailpit
+  mail:
+    image: axllent/mailpit:latest
+    container_name: saas_permitting_mail
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP Port
+      - "8025:8025" # Web UI Dashboard
+    environment:
+      MP_MAX_MESSAGES: 500
+
+  # 5. Core Service: Identity & Tenant Service (Go microservice)
+  identity-service:
+    build:
+      context: ./services/identity-service
+      dockerfile: Dockerfile
+    container_name: saas_identity_service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_USER: saas_admin
+      DB_PASSWORD: saas_password_2026
+      DB_NAME: saas_permits
+      JWT_SECRET: super_secret_key_2026_change_me
+      PORT: 8081
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  saas_db_data:
+    driver: local
+  saas_cache_data:
+    driver: local
+  saas_storage_data:
+    driver: local
