@@ -109,6 +109,21 @@ services:
       database:
         condition: service_healthy
 
+  # 7. Frontend: Next.js Web Application
+  web-app:
+    build:
+      context: ./web-app
+      dockerfile: Dockerfile
+    container_name: saas_web_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - identity-service
+      - projects-service
+
 volumes:
   saas_db_data:
     driver: local
