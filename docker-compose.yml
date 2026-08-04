@@ -120,6 +120,10 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
+    volumes:
+      - ./web-app:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - identity-service
       - projects-service
