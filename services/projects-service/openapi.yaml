@@ -1,0 +1,280 @@
+openapi: 3.0.0
+info:
+  title: Projects & CRM Service API
+  description: Microservicio encargado de gestionar los clientes (CRM), proyectos de construcción y casos de permisos asociados bajo el contexto de multi-inquilino (RLS).
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Servidor de Desarrollo Local
+security:
+  - BearerAuth: []
+paths:
+  /clients:
+    post:
+      summary: Crear un nuevo cliente (CRM)
+      description: Registra un cliente de la empresa del Tenant actual.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - contact_email
+              properties:
+                name:
+                  type: string
+                  example: Inmobiliaria del Pacifico
+                contact_email:
+                  type: string
+                  format: email
+                  example: contacto@inmobiliariapacifico.com
+                contact_phone:
+                  type: string
+                  example: "+56912345678"
+                billing_address:
+                  type: string
+                  example: Av. Vitacura 1234, Oficina 501, Santiago
+      responses:
+        '201':
+          description: Cliente creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Client created successfully
+                  client_id:
+                    type: string
+                    format: uuid
+                    example: 8e83344e-124b-4b2a-bf39-389f9d6c812c
+        '401':
+          description: No autorizado (Token inválido o ausente)
+        '500':
+          description: Error interno del servidor
+
+    get:
+      summary: Listar todos los clientes del Tenant
+      description: Retorna la lista de clientes asociados al Tenant extraído del JWT. Gracias a RLS, PostgreSQL filtra automáticamente los datos correspondientes.
+      responses:
+        '200':
+          description: Lista de clientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '401':
+          description: No autorizado
+
+  /projects:
+    post:
+      summary: Crear un nuevo proyecto de construcción
+      description: Registra un proyecto de construcción asociado a un cliente del Tenant actual.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - client_id
+                - name
+                - address
+              properties:
+                client_id:
+                  type: string
+                  format: uuid
+                  example: 8e83344e-124b-4b2a-bf39-389f9d6c812c
+                name:
+                  type: string
+                  example: Edificio Mirador Alameda
+                address:
+                  type: string
+                  example: Av. Libertador Bernardo O'Higgins 456, Santiago
+                scope:
+                  type: string
+                  example: Construcción de edificio residencial de 15 pisos y 3 subterráneos.
+      responses:
+        '201':
+          description: Proyecto creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Project created successfully
+                  project_id:
+                    type: string
+                    format: uuid
+                    example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        '404':
+          description: Cliente no encontrado bajo este Tenant
+        '401':
+          description: No autorizado
+
+    get:
+      summary: Listar todos los proyectos del Tenant
+      description: Retorna la lista de proyectos del Tenant activo.
+      responses:
+        '200':
+          description: Lista de proyectos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '401':
+          description: No autorizado
+
+  /permits:
+    post:
+      summary: Crear un nuevo caso de permiso para un proyecto
+      description: Inicia un expediente de permiso para un proyecto de construcción existente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - project_id
+                - jurisdiction_id
+                - type
+              properties:
+                project_id:
+                  type: string
+                  format: uuid
+                  example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+                jurisdiction_id:
+                  type: string
+                  format: uuid
+                  example: 330e8400-e29b-41d4-a716-446655440010
+                type:
+                  type: string
+                  example: edificación_obra_nueva
+      responses:
+        '201':
+          description: Expediente de permiso creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Permit case created successfully
+                  permit_id:
+                    type: string
+                    format: uuid
+                    example: a7b8c9d0-1234-5678-90ab-cdef12345678
+        '404':
+          description: Proyecto no encontrado bajo este Tenant
+        '401':
+          description: No autorizado
+
+    get:
+      summary: Listar todos los permisos del Tenant
+      description: Retorna todos los permisos correspondientes a los proyectos del Tenant activo.
+      responses:
+        '200':
+          description: Lista de permisos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permit'
+        '401':
+          description: No autorizado
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        contact_email:
+          type: string
+        contact_phone:
+          type: string
+        billing_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        scope:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Permit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        jurisdiction_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        internal_status:
+          type: string
+        external_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

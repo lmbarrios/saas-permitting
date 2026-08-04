@@ -88,6 +88,27 @@ services:
       database:
         condition: service_healthy
 
+  # 6. Core Service: Projects & CRM Service (Go microservice)
+  projects-service:
+    build:
+      context: ./services/projects-service
+      dockerfile: Dockerfile
+    container_name: saas_projects_service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_USER: saas_admin
+      DB_PASSWORD: saas_password_2026
+      DB_NAME: saas_permits
+      JWT_SECRET: super_secret_key_2026_change_me
+      PORT: 8082
+    depends_on:
+      database:
+        condition: service_healthy
+
 volumes:
   saas_db_data:
     driver: local

@@ -1,114 +1,314 @@
 {
 	"info": {
 		"_postman_id": "7a35e8cb-df8d-4be9-ba54-5264b971a8f9",
-		"name": "SaaS Permitting - Identity Service",
-		"description": "Colección de Postman para probar el Identity & Tenant Service de la plataforma SaaS de Permisos de Construcción.",
+		"name": "SaaS Permitting Platform - Local API Test",
+		"description": "Colección completa de Postman para probar el Identity Service y el Projects & CRM Service del SaaS de Permisos.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Register Tenant",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"tenant_name\": \"ACME Permitting Services\",\n  \"plan\": \"professional\",\n  \"admin_email\": \"admin@acme-permits.com\",\n  \"admin_name\": \"John Doe\",\n  \"admin_password\": \"supersecretpassword123\"\n}"
-				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/tenants/register",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"tenants",
-						"register"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Login",
-			"event": [
+			"name": "Auth & Tenants",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"const response = pm.response.json();",
-							"if (response.token) {",
-							"    pm.environment.set(\"jwt_token\", response.token);",
-							"    console.log(\"JWT Token guardado en la variable de entorno: jwt_token\");",
-							"}"
+					"name": "Register Tenant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"email\": \"admin@acme-permits.com\",\n  \"password\": \"supersecretpassword123\"\n}"
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tenant_name\": \"ACME Permiting Services\",\n  \"plan\": \"professional\",\n  \"admin_email\": \"admin@acme-permits.com\",\n  \"admin_name\": \"John Doe\",\n  \"admin_password\": \"supersecretpassword123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/tenants/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"tenants",
+								"register"
+							]
+						}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "http://localhost:8081/api/v1/auth/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"if (response.token) {",
+									"    pm.environment.set(\"jwt_token\", response.token);",
+									"    console.log(\"JWT Token guardado en la variable: jwt_token\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
 					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"auth",
-						"login"
-					]
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@acme-permits.com\",\n  \"password\": \"supersecretpassword123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/api/v1/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile (Me)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8081/api/v1/auth/me",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Get Profile (Me)",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{jwt_token}}"
-					}
-				],
-				"url": {
-					"raw": "http://localhost:8081/api/v1/auth/me",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8081",
-					"path": [
-						"api",
-						"v1",
-						"auth",
-						"me"
-					]
+			"name": "CRM (Clients)",
+			"item": [
+				{
+					"name": "Create Client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Inmobiliaria del Pacifico\",\n  \"contact_email\": \"contacto@inmobiliariapacifico.com\",\n  \"contact_phone\": \"+56912345678\",\n  \"billing_address\": \"Av. Vitacura 1234, Oficina 501, Santiago\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/v1/clients",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"clients"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Clients",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8082/api/v1/clients",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"clients"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Create Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"client_id\": \"PONER_AQUI_EL_CLIENT_ID_CREADO\",\n  \"name\": \"Edificio Mirador Alameda\",\n  \"address\": \"Av. Libertador Bernardo O'Higgins 456, Santiago\",\n  \"scope\": \"Construcción de edificio residencial de 15 pisos y 3 subterráneos.\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/v1/projects",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"projects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Projects",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8082/api/v1/projects",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"projects"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Permits",
+			"item": [
+				{
+					"name": "Create Permit Case",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"project_id\": \"PONER_AQUI_EL_PROJECT_ID_CREADO\",\n  \"jurisdiction_id\": \"330e8400-e29b-41d4-a716-446655440010\",\n  \"type\": \"edificación_obra_nueva\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/api/v1/permits",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"permits"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Permits",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8082/api/v1/permits",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"api",
+								"v1",
+								"permits"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }
