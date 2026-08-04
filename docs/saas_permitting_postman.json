@@ -1,0 +1,114 @@
+{
+	"info": {
+		"_postman_id": "7a35e8cb-df8d-4be9-ba54-5264b971a8f9",
+		"name": "SaaS Permitting - Identity Service",
+		"description": "Colección de Postman para probar el Identity & Tenant Service de la plataforma SaaS de Permisos de Construcción.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register Tenant",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"tenant_name\": \"ACME Permitting Services\",\n  \"plan\": \"professional\",\n  \"admin_email\": \"admin@acme-permits.com\",\n  \"admin_name\": \"John Doe\",\n  \"admin_password\": \"supersecretpassword123\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/v1/tenants/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"tenants",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const response = pm.response.json();",
+							"if (response.token) {",
+							"    pm.environment.set(\"jwt_token\", response.token);",
+							"    console.log(\"JWT Token guardado en la variable de entorno: jwt_token\");",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@acme-permits.com\",\n  \"password\": \"supersecretpassword123\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/v1/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Profile (Me)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/api/v1/auth/me",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"me"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

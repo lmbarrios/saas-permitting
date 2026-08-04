@@ -1,0 +1,170 @@
+openapi: 3.0.0
+info:
+  title: Identity & Tenant Service API
+  description: Microservicio encargado del registro de Tenants (empresas) y la autenticación de usuarios mediante JWT en la plataforma SaaS de Permisos.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Servidor de Desarrollo Local
+paths:
+  /tenants/register:
+    post:
+      summary: Registrar una nueva empresa (Tenant) y su administrador
+      description: Crea una cuenta de empresa y genera el primer usuario con rol de administrador en una sola transacción.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tenant_name
+                - plan
+                - admin_email
+                - admin_name
+                - admin_password
+              properties:
+                tenant_name:
+                  type: string
+                  example: ACME Permitting Services
+                plan:
+                  type: string
+                  enum: [starter, professional, enterprise]
+                  example: professional
+                admin_email:
+                  type: string
+                  format: email
+                  example: admin@acme-permits.com
+                admin_name:
+                  type: string
+                  example: John Doe
+                admin_password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: supersecretpassword123
+      responses:
+        '201':
+          description: Registro exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Tenant and admin user successfully registered
+                  tenant_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  admin_id:
+                    type: string
+                    format: uuid
+                    example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+        '400':
+          description: Payload inválido o malformado
+        '500':
+          description: Error interno del servidor
+
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      description: Valida las credenciales del usuario y retorna un token JWT válido por 24 horas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@acme-permits.com
+                password:
+                  type: string
+                  format: password
+                  example: supersecretpassword123
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+                      tenant_id:
+                        type: string
+                        format: uuid
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      email:
+                        type: string
+                        example: admin@acme-permits.com
+                      name:
+                        type: string
+                        example: John Doe
+                      role:
+                        type: string
+                        example: admin
+                      status:
+                        type: string
+                        example: active
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        '401':
+          description: Credenciales incorrectas
+        '403':
+          description: Cuenta inactiva o suspendida
+
+  /auth/me:
+    get:
+      summary: Obtener perfil del usuario actual (Protegido)
+      description: Retorna la información de identidad extraída del token JWT provisto en las cabeceras de la petición.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Perfil retornado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    format: uuid
+                    example: f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+                  tenant_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  role:
+                    type: string
+                    example: admin
+        '401':
+          description: Token inválido, expirado o ausente
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
